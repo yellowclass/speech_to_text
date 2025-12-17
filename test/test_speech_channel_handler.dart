@@ -7,7 +7,15 @@ import 'package:speech_to_text/speech_to_text.dart';
 /// implementations allowing test cases to determine what the result of
 /// a call should be.
 class TestSpeechChannelHandler {
+  // ignore: unused_field
   final SpeechToText _speech;
+
+  bool listenException = false;
+
+  static const String listenExceptionCode = 'listenFailedError';
+  static const String listenExceptionMessage = 'Failed';
+  static const String listenExceptionDetails = 'Device Listen Failure';
+
   TestSpeechChannelHandler(this._speech);
 
   bool initResult = true;
@@ -18,14 +26,14 @@ class TestSpeechChannelHandler {
   bool localesInvoked = false;
   bool hasPermissionResult = true;
   String listeningStatusResponse = SpeechToText.listeningStatus;
-  String listenLocale;
+  String? listenLocale;
   List<String> locales = [];
-  static const String localeId1 = "en_US";
-  static const String localeId2 = "fr_CA";
-  static const String name1 = "English US";
-  static const String name2 = "French Canada";
-  static const String locale1 = "$localeId1:$name1";
-  static const String locale2 = "$localeId2:$name2";
+  static const String localeId1 = 'en_US';
+  static const String localeId2 = 'fr_CA';
+  static const String name1 = 'English US';
+  static const String name2 = 'French Canada';
+  static const String locale1 = '$localeId1:$name1';
+  static const String locale2 = '$localeId2:$name2';
   static const String firstRecognizedWords = 'hello';
   static const String secondRecognizedWords = 'hello there';
   static const double firstConfidence = 0.85;
@@ -37,80 +45,88 @@ class TestSpeechChannelHandler {
   static const String finalRecognizedJson =
       '{"alternates":[{"recognizedWords":"$secondRecognizedWords","confidence":$secondConfidence}],"finalResult":true}';
   static const SpeechRecognitionWords firstWords =
-      SpeechRecognitionWords(firstRecognizedWords, firstConfidence);
+      SpeechRecognitionWords(firstRecognizedWords, null, firstConfidence);
   static const SpeechRecognitionWords secondWords =
-      SpeechRecognitionWords(secondRecognizedWords, secondConfidence);
+      SpeechRecognitionWords(secondRecognizedWords, null, secondConfidence);
+  static const SpeechRecognitionWords firstPhrases = SpeechRecognitionWords(
+      secondRecognizedWords,
+      [firstRecognizedWords, secondRecognizedWords],
+      secondConfidence);
+  static const firstAggregatePhrases =
+      '$firstRecognizedWords $secondRecognizedWords';
   static final SpeechRecognitionResult firstRecognizedResult =
       SpeechRecognitionResult([firstWords], false);
   static final SpeechRecognitionResult secondRecognizedResult =
       SpeechRecognitionResult([secondWords], false);
   static final SpeechRecognitionResult finalRecognizedResult =
       SpeechRecognitionResult([secondWords], true);
+  static final SpeechRecognitionResult firstPhrasesResult =
+      SpeechRecognitionResult([firstPhrases], true);
   static const String transientErrorJson =
       '{"errorMsg":"network","permanent":false}';
   static const String permanentErrorJson =
       '{"errorMsg":"network","permanent":true}';
   static final SpeechRecognitionError firstError =
-      SpeechRecognitionError("network", true);
+      SpeechRecognitionError('network', true);
   static const double level1 = 0.5;
   static const double level2 = 10;
 
   Future<dynamic> methodCallHandler(MethodCall methodCall) async {
     switch (methodCall.method) {
-      case "has_permission":
+      case 'has_permission':
         return hasPermissionResult;
-        break;
-      case "initialize":
+      case 'initialize':
         initInvoked = true;
         return initResult;
-        break;
-      case "cancel":
+      case 'cancel':
         cancelInvoked = true;
         return true;
-        break;
-      case "stop":
+      case 'stop':
         stopInvoked = true;
         return true;
-        break;
       case SpeechToText.listenMethod:
         listenInvoked = true;
-        listenLocale = methodCall.arguments["localeId"];
-        await _speech.processMethodCall(MethodCall(
-            SpeechToText.notifyStatusMethod, listeningStatusResponse));
+        if (listenException) {
+          throw PlatformException(
+              code: listenExceptionCode,
+              message: listenExceptionMessage,
+              details: listenExceptionDetails);
+        }
+        listenLocale = methodCall.arguments['localeId'];
+        // await _speech.processMethodCall(MethodCall(
+        //     SpeechToText.notifyStatusMethod, listeningStatusResponse));
         return initResult;
-        break;
-      case "locales":
+      case 'locales':
         localesInvoked = true;
         return locales;
-        break;
       default:
     }
     return initResult;
   }
 
   void notifyFinalWords() {
-    _speech.processMethodCall(
-        MethodCall(SpeechToText.textRecognitionMethod, finalRecognizedJson));
+    // _speech.processMethodCall(
+    //     MethodCall(SpeechToText.textRecognitionMethod, finalRecognizedJson));
   }
 
   void notifyPartialWords() {
-    _speech.processMethodCall(
-        MethodCall(SpeechToText.textRecognitionMethod, firstRecognizedJson));
+    // _speech.processMethodCall(
+    //     MethodCall(SpeechToText.textRecognitionMethod, firstRecognizedJson));
   }
 
   void notifyPermanentError() {
-    _speech.processMethodCall(
-        MethodCall(SpeechToText.notifyErrorMethod, permanentErrorJson));
+    // _speech.processMethodCall(
+    //     MethodCall(SpeechToText.notifyErrorMethod, permanentErrorJson));
   }
 
   void notifyTransientError() {
-    _speech.processMethodCall(
-        MethodCall(SpeechToText.notifyErrorMethod, transientErrorJson));
+    // _speech.processMethodCall(
+    //     MethodCall(SpeechToText.notifyErrorMethod, transientErrorJson));
   }
 
   void notifySoundLevel() {
-    _speech.processMethodCall(
-        MethodCall(SpeechToText.soundLevelChangeMethod, level2));
+    // _speech.processMethodCall(
+    //     MethodCall(SpeechToText.soundLevelChangeMethod, level2));
   }
 
   void setupLocales() {

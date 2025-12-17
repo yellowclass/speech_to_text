@@ -4,16 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 
 void main() {
-  final String firstRecognizedWords = 'hello';
-  final String secondRecognizedWords = 'hello there';
-  final double firstConfidence = 0.85;
-  final double secondConfidence = 0.62;
-  final String firstRecognizedJson =
+  final firstRecognizedWords = 'hello';
+  final secondRecognizedWords = 'hello there';
+  final firstConfidence = 0.85;
+  final secondConfidence = 0.62;
+  final firstRecognizedJson =
       '{"recognizedWords":"$firstRecognizedWords","confidence":$firstConfidence}';
-  final SpeechRecognitionWords firstWords =
-      SpeechRecognitionWords(firstRecognizedWords, firstConfidence);
-  final SpeechRecognitionWords secondWords =
-      SpeechRecognitionWords(secondRecognizedWords, secondConfidence);
+  final firstWords =
+      SpeechRecognitionWords(firstRecognizedWords, null, firstConfidence);
+  final secondWords =
+      SpeechRecognitionWords(secondRecognizedWords, null, secondConfidence);
 
   setUp(() {});
 
@@ -31,8 +31,8 @@ void main() {
       expect(firstWords, firstWords);
     });
     test('equals true for different object with same values', () {
-      SpeechRecognitionWords firstWordsA =
-          SpeechRecognitionWords(firstRecognizedWords, firstConfidence);
+      var firstWordsA =
+          SpeechRecognitionWords(firstRecognizedWords, null, firstConfidence);
       expect(firstWords, firstWordsA);
     });
     test('equals false for different results', () {
@@ -42,8 +42,8 @@ void main() {
       expect(firstWords.hashCode, firstWords.hashCode);
     });
     test('hash same for different object with same values', () {
-      SpeechRecognitionWords firstWordsA =
-          SpeechRecognitionWords(firstRecognizedWords, firstConfidence);
+      var firstWordsA =
+          SpeechRecognitionWords(firstRecognizedWords, null, firstConfidence);
       expect(firstWords.hashCode, firstWordsA.hashCode);
     });
     test('hash different for different results', () {
@@ -61,8 +61,8 @@ void main() {
       expect(secondWords.isConfident(threshold: 0.5), isTrue);
     });
     test('true when missing', () {
-      SpeechRecognitionWords words = SpeechRecognitionWords(
-          firstRecognizedWords, SpeechRecognitionWords.missingConfidence);
+      var words = SpeechRecognitionWords(
+          firstRecognizedWords, null, SpeechRecognitionWords.missingConfidence);
       expect(words.isConfident(), isTrue);
       expect(words.hasConfidenceRating, isFalse);
     });
@@ -70,17 +70,28 @@ void main() {
   group('json', () {
     test('loads correctly', () {
       var json = jsonDecode(firstRecognizedJson);
-      SpeechRecognitionWords words = SpeechRecognitionWords.fromJson(json);
+      var words = SpeechRecognitionWords.fromJson(json);
       expect(words.recognizedWords, firstRecognizedWords);
       expect(words.confidence, firstConfidence);
     });
     test('roundtrips correctly', () {
       var json = jsonDecode(firstRecognizedJson);
-      SpeechRecognitionWords words = SpeechRecognitionWords.fromJson(json);
+      var words = SpeechRecognitionWords.fromJson(json);
       var roundTripJson = words.toJson();
-      SpeechRecognitionWords roundtripWords =
-          SpeechRecognitionWords.fromJson(roundTripJson);
+      var roundtripWords = SpeechRecognitionWords.fromJson(roundTripJson);
       expect(words, roundtripWords);
+    });
+    test('roundtrips correctly with phrases', () {
+      final phrase1 = 'first part';
+      final phrase2 = 'second part';
+      final initialWords = SpeechRecognitionWords(
+          firstRecognizedWords, [phrase1, phrase2], firstConfidence);
+      var roundTripJson = initialWords.toJson();
+      var roundtripWords = SpeechRecognitionWords.fromJson(roundTripJson);
+      expect(roundtripWords.recognizedPhrases,
+          containsAll(initialWords.recognizedPhrases!));
+      expect(roundtripWords.recognizedWords, initialWords.recognizedWords);
+      expect(roundtripWords.confidence, initialWords.confidence);
     });
   });
 }

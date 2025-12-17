@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:json_annotation/json_annotation.dart';
 
 part 'speech_recognition_result.g.dart';
@@ -13,7 +11,7 @@ part 'speech_recognition_result.g.dart';
 /// result is considered final by the platform.
 @JsonSerializable(explicitToJson: true)
 class SpeechRecognitionResult {
-  List<SpeechRecognitionWords> _alternates;
+  List<SpeechRecognitionWords> alternates;
 
   /// Returns a list of possible transcriptions of the speech.
   ///
@@ -21,17 +19,18 @@ class SpeechRecognitionResult {
   /// value. Use the confidence for each alternate transcription
   /// to determine how likely it is. Note that not all platforms
   /// do a good job with confidence, there are convenience methods
-  /// on [SpeechRecogntionWords] to work with possibly missing
+  /// on [SpeechRecognitionWords] to work with possibly missing
   /// confidence values.
-  List<SpeechRecognitionWords> get alternates =>
-      UnmodifiableListView(_alternates);
+  // TODO: Fix up the interface.
+  // List<SpeechRecognitionWords> get alternates =>
+  //    UnmodifiableListView(alternates);
 
   /// The sequence of words that is the best transcription of
   /// what was said.
   ///
   /// This is the same as the first value of [alternates].
   String get recognizedWords =>
-      _alternates.isNotEmpty ? _alternates.first.recognizedWords : "";
+      alternates.isNotEmpty ? alternates.first.recognizedWords : '';
 
   /// False means the words are an interim result, true means
   /// they are the final recognition.
@@ -42,7 +41,7 @@ class SpeechRecognitionResult {
   /// Confidence is expressed as a value between 0 and 1. -1
   /// means that the confidence value was not available.
   double get confidence =>
-      _alternates.isNotEmpty ? _alternates.first.confidence : 0;
+      alternates.isNotEmpty ? alternates.first.confidence : 0;
 
   /// true if there is confidence in this recognition, false otherwise.
   ///
@@ -52,20 +51,20 @@ class SpeechRecognitionResult {
   /// [threshold]. If [threshold] is not provided it defaults to 0.8.
   bool isConfident(
           {double threshold = SpeechRecognitionWords.confidenceThreshold}) =>
-      _alternates.isNotEmpty
-          ? _alternates.first.isConfident(threshold: threshold)
+      alternates.isNotEmpty
+          ? alternates.first.isConfident(threshold: threshold)
           : false;
 
-  /// true if [confidence] is not the [missingConfidence] value, false
+  /// true if [confidence] is not the [SpeechRecognitionWords.missingConfidence] value, false
   /// otherwise.
   bool get hasConfidenceRating =>
-      _alternates.isNotEmpty ? _alternates.first.hasConfidenceRating : false;
+      alternates.isNotEmpty ? alternates.first.hasConfidenceRating : false;
 
-  SpeechRecognitionResult(this._alternates, this.finalResult);
+  SpeechRecognitionResult(this.alternates, this.finalResult);
 
   @override
   String toString() {
-    return "SpeechRecognitionResult words: $_alternates, final: $finalResult";
+    return 'SpeechRecognitionResult words: $alternates, final: $finalResult';
   }
 
   @override
@@ -82,6 +81,10 @@ class SpeechRecognitionResult {
   factory SpeechRecognitionResult.fromJson(Map<String, dynamic> json) =>
       _$SpeechRecognitionResultFromJson(json);
   Map<String, dynamic> toJson() => _$SpeechRecognitionResultToJson(this);
+
+  SpeechRecognitionResult toFinal() {
+    return SpeechRecognitionResult(alternates, true);
+  }
 }
 
 /// A set of words recognized in a [SpeechRecognitionResult].
@@ -93,6 +96,18 @@ class SpeechRecognitionWords {
   /// The sequence of words recognized
   final String recognizedWords;
 
+  /// If the platform provides it, a list of phrases that were recognized
+  /// as individual utterances. This can generally be ignored as it
+  /// is usually null and where it is not [recognizedWords] will contain
+  /// the same information aggregated into a single string.
+  /// Currently this is only populated on iOS 17.5 and 18 where a bug in
+  /// the speech recognizer causes unexpected extra phrases. These are
+  /// automatically handled by the plugin and recognizedWords will be
+  /// an aggregate of all the phrases. To customize the handling of
+  /// these phrases, use the [SpeechToText.unexpectedPhraseAggregator] property
+  /// to customize the aggregation.
+  final List<String>? recognizedPhrases;
+
   /// The confidence that the [recognizedWords] are correct.
   ///
   /// Confidence is expressed as a value between 0 and 1. 0
@@ -103,7 +118,8 @@ class SpeechRecognitionWords {
   static const double confidenceThreshold = 0.8;
   static const double missingConfidence = -1;
 
-  const SpeechRecognitionWords(this.recognizedWords, this.confidence);
+  const SpeechRecognitionWords(
+      this.recognizedWords, this.recognizedPhrases, this.confidence);
 
   /// true if there is confidence in this recognition, false otherwise.
   ///
@@ -120,7 +136,7 @@ class SpeechRecognitionWords {
 
   @override
   String toString() {
-    return "SpeechRecognitionWords words: $recognizedWords,  confidence: $confidence";
+    return 'SpeechRecognitionWords words: $recognizedWords,  confidence: $confidence';
   }
 
   @override

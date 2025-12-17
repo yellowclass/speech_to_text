@@ -14,7 +14,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 /// var speechProvider = SpeechToTextProvider( SpeechToText());
 /// var available = await speechProvider.initialize();
 /// StreamSubscription<SpeechRecognitionEvent> _subscription;
-/// _subscription = speechProvider.recognitionController.stream.listen((recognitionEvent) {
+/// _subscription = speechProvider.stream.listen((recognitionEvent) {
 ///   if (recognitionEvent.eventType == SpeechRecognitionEventType.finalRecognitionEvent )  {
 ///       print("I heard: ${recognitionEvent.recognitionResult.recognizedWords}");
 ///     }
@@ -26,10 +26,10 @@ class SpeechToTextProvider extends ChangeNotifier {
   final StreamController<SpeechRecognitionEvent> _recognitionController =
       StreamController.broadcast();
   final SpeechToText _speechToText;
-  SpeechRecognitionResult _lastResult;
+  SpeechRecognitionResult? _lastResult;
   double _lastLevel = 0;
   List<LocaleName> _locales = [];
-  LocaleName _systemLocale;
+  LocaleName? _systemLocale;
 
   /// Only construct one instance in an application.
   ///
@@ -39,11 +39,11 @@ class SpeechToTextProvider extends ChangeNotifier {
 
   Stream<SpeechRecognitionEvent> get stream => _recognitionController.stream;
 
-  /// Returns the last result received, may be null.
-  SpeechRecognitionResult get lastResult => _lastResult;
+  /// Returns the last result received.
+  SpeechRecognitionResult? get lastResult => _lastResult;
 
-  /// Returns the last error received, may be null.
-  SpeechRecognitionError get lastError => _speechToText.lastError;
+  /// Returns the last error received.
+  SpeechRecognitionError? get lastError => _speechToText.lastError;
 
   /// Returns the last sound level received.
   ///
@@ -54,14 +54,21 @@ class SpeechToTextProvider extends ChangeNotifier {
   /// Initializes the provider and the contained [SpeechToText] instance.
   ///
   /// Returns true if [SpeechToText] was initialized successful and can now
-  /// be used, false otherwse.
-  Future<bool> initialize() async {
+  /// be used, false otherwise.
+  Future<bool> initialize(
+      {debugLogging = false,
+      Duration finalTimeout = SpeechToText.defaultFinalTimeout,
+      List<SpeechConfigOption>? options}) async {
     if (isAvailable) {
       return isAvailable;
     }
-    bool availableBefore = _speechToText.isAvailable;
-    bool available =
-        await _speechToText.initialize(onStatus: _onStatus, onError: _onError);
+    var availableBefore = _speechToText.isAvailable;
+    var available = await _speechToText.initialize(
+        onStatus: _onStatus,
+        onError: _onError,
+        debugLogging: debugLogging,
+        finalTimeout: finalTimeout,
+        options: options);
     if (available) {
       _locales = [];
       _locales.addAll(await _speechToText.locales());
@@ -96,10 +103,17 @@ class SpeechToTextProvider extends ChangeNotifier {
   List<LocaleName> get locales => _locales;
 
   /// Returns the locale that is currently set as active on the device.
-  LocaleName get systemLocale => _systemLocale;
+  LocaleName? get systemLocale => _systemLocale;
 
   /// Start listening for new events, set [partialResults] to true to receive interim
   /// recognition results.
+  ///
+  /// [partialResults] if true the listen reports results as they are recognized,
+  /// when false only final results are reported. Defaults to true.
+  ///
+  /// [onDevice] if true the listen attempts to recognize locally with speech never
+  /// leaving the device. If it cannot do this the listen attempt will fail. This is
+  /// usually only needed for sensitive content where privacy or security is a concern.
   ///
   /// [soundLevel] set to true to be notified on changes to the input sound level
   /// on the microphone.
@@ -110,29 +124,41 @@ class SpeechToTextProvider extends ChangeNotifier {
   /// [pauseFor] sets the maximum duration of a pause in speech with no words
   /// detected, after that it automatically stops the listen for you.
   ///
+  /// [localeId] is an optional locale that can be used to listen in a language
+  /// other than the current system default. See [locales] to find the list of
+  /// supported languages for listening.
+  ///
   /// Call this only after a successful [initialize] call
   void listen(
-      {bool partialResults = false,
+      {bool partialResults = true,
+      onDevice = false,
       bool soundLevel = false,
-      Duration listenFor,
-      Duration pauseFor}) {
+      Duration? listenFor,
+      Duration? pauseFor,
+      String? localeId,
+      ListenMode listenMode = ListenMode.confirmation}) {
     _lastLevel = 0;
     _lastResult = null;
+    final options = SpeechListenOptions(
+        partialResults: partialResults,
+        onDevice: onDevice,
+        cancelOnError: true,
+        listenMode: listenMode);
     if (soundLevel) {
       _speechToText.listen(
-          partialResults: partialResults,
           listenFor: listenFor,
           pauseFor: pauseFor,
-          cancelOnError: true,
           onResult: _onListenResult,
-          onSoundLevelChange: _onSoundLevelChange);
+          onSoundLevelChange: _onSoundLevelChange,
+          localeId: localeId,
+          listenOptions: options);
     } else {
       _speechToText.listen(
-          partialResults: partialResults,
           listenFor: listenFor,
           pauseFor: pauseFor,
-          cancelOnError: true,
-          onResult: _onListenResult);
+          onResult: _onListenResult,
+          localeId: localeId,
+          listenOptions: options);
     }
   }
 
@@ -165,12 +191,17 @@ class SpeechToTextProvider extends ChangeNotifier {
   }
 
   void _onStatus(String status) {
-    _recognitionController.add(SpeechRecognitionEvent(
-        SpeechRecognitionEventType.statusChangeEvent,
-        null,
-        null,
-        isListening,
-        null));
+    if (status == SpeechToText.doneStatus) {
+      _recognitionController.add(SpeechRecognitionEvent(
+          SpeechRecognitionEventType.doneEvent, null, null, isListening, null));
+    } else {
+      _recognitionController.add(SpeechRecognitionEvent(
+          SpeechRecognitionEventType.statusChangeEvent,
+          null,
+          null,
+          isListening,
+          null));
+    }
     notifyListeners();
   }
 

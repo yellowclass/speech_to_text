@@ -5,11 +5,13 @@ import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
@@ -17,10 +19,10 @@ class _MyAppState extends State<MyApp> {
   bool _stressTest = false;
   double level = 0.0;
   int _stressLoops = 0;
-  String lastWords = "";
-  String lastError = "";
-  String lastStatus = "";
-  String _currentLocaleId = "";
+  String lastWords = '';
+  String lastError = '';
+  String lastStatus = '';
+  String _currentLocaleId = '';
   List<LocaleName> _localeNames = [];
   final SpeechToText speech = SpeechToText();
 
@@ -30,13 +32,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initSpeechState() async {
-    bool hasSpeech = await speech.initialize(
+    var hasSpeech = await speech.initialize(
         onError: errorListener, onStatus: statusListener);
     if (hasSpeech) {
       _localeNames = await speech.locales();
 
       var systemLocale = await speech.systemLocale();
-      _currentLocaleId = systemLocale.localeId;
+      _currentLocaleId = systemLocale?.localeId ?? '';
     }
 
     if (!mounted) return;
@@ -54,72 +56,70 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Speech to Text Example'),
         ),
         body: Column(children: [
-          Center(
+          const Center(
             child: Text(
               'Speech recognition available',
               style: TextStyle(fontSize: 22.0),
             ),
           ),
-          Container(
-            child: Column(
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    FlatButton(
-                      child: Text('Initialize'),
-                      onPressed: _hasSpeech ? null : initSpeechState,
-                    ),
-                    FlatButton(
-                      child: Text('Stress Test'),
-                      onPressed: stressTest,
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    FlatButton(
-                      child: Text('Start'),
-                      onPressed: !_hasSpeech || speech.isListening
-                          ? null
-                          : startListening,
-                    ),
-                    FlatButton(
-                      child: Text('Stop'),
-                      onPressed: speech.isListening ? stopListening : null,
-                    ),
-                    FlatButton(
-                      child: Text('Cancel'),
-                      onPressed: speech.isListening ? cancelListening : null,
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    DropdownButton(
-                      onChanged: (selectedVal) => _switchLang(selectedVal),
-                      value: _currentLocaleId,
-                      items: _localeNames
-                          .map(
-                            (localeName) => DropdownMenuItem(
-                              value: localeName.localeId,
-                              child: Text(localeName.name),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                )
-              ],
-            ),
+          Column(
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  TextButton(
+                    onPressed: _hasSpeech ? null : initSpeechState,
+                    child: const Text('Initialize'),
+                  ),
+                  TextButton(
+                    onPressed: stressTest,
+                    child: const Text('Stress Test'),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  TextButton(
+                    onPressed: !_hasSpeech || speech.isListening
+                        ? null
+                        : startListening,
+                    child: const Text('Start'),
+                  ),
+                  TextButton(
+                    onPressed: speech.isListening ? stopListening : null,
+                    child: const Text('Stop'),
+                  ),
+                  TextButton(
+                    onPressed: speech.isListening ? cancelListening : null,
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  DropdownButton(
+                    onChanged: (selectedVal) => _switchLang(selectedVal),
+                    value: _currentLocaleId,
+                    items: _localeNames
+                        .map(
+                          (localeName) => DropdownMenuItem(
+                            value: localeName.localeId,
+                            child: Text(localeName.name),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              )
+            ],
           ),
           Expanded(
             flex: 4,
             child: Column(
               children: <Widget>[
-                Center(
+                const Center(
                   child: Text(
                     'Recognized Words',
                     style: TextStyle(fontSize: 22.0),
@@ -129,7 +129,7 @@ class _MyAppState extends State<MyApp> {
                   child: Stack(
                     children: <Widget>[
                       Container(
-                        color: Theme.of(context).selectedRowColor,
+                        color: Theme.of(context).secondaryHeaderColor,
                         child: Center(
                           child: Text(
                             lastWords,
@@ -154,9 +154,10 @@ class _MyAppState extends State<MyApp> {
                               ],
                               color: Colors.white,
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(50)),
+                                  const BorderRadius.all(Radius.circular(50)),
                             ),
-                            child: IconButton(icon: Icon(Icons.mic)),
+                            child: IconButton(
+                                icon: const Icon(Icons.mic), onPressed: () {}),
                           ),
                         ),
                       ),
@@ -170,7 +171,7 @@ class _MyAppState extends State<MyApp> {
             flex: 1,
             child: Column(
               children: <Widget>[
-                Center(
+                const Center(
                   child: Text(
                     'Error Status',
                     style: TextStyle(fontSize: 22.0),
@@ -183,15 +184,15 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            color: Theme.of(context).backgroundColor,
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            color: Theme.of(context).colorScheme.surface,
             child: Center(
               child: speech.isListening
-                  ? Text(
+                  ? const Text(
                       "I'm listening...",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     )
-                  : Text(
+                  : const Text(
                       'Not listening',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
@@ -208,7 +209,7 @@ class _MyAppState extends State<MyApp> {
     }
     _stressLoops = 0;
     _stressTest = true;
-    print("Starting stress test...");
+    debugPrint('Starting stress test...');
     startListening();
   }
 
@@ -221,25 +222,25 @@ class _MyAppState extends State<MyApp> {
     } else {
       if (_stressLoops >= 100) {
         _stressTest = false;
-        print("Stress test complete.");
+        debugPrint('Stress test complete.');
         return;
       }
-      print("Stress loop: $_stressLoops");
+      debugPrint('Stress loop: $_stressLoops');
       ++_stressLoops;
       startListening();
     }
   }
 
   void startListening() {
-    lastWords = "";
-    lastError = "";
+    lastWords = '';
+    lastError = '';
     speech.listen(
         onResult: resultListener,
-        listenFor: Duration(seconds: 10),
+        listenFor: const Duration(seconds: 10),
         localeId: _currentLocaleId,
         onSoundLevelChange: soundLevelListener,
-        cancelOnError: true,
-        partialResults: true);
+        listenOptions:
+            SpeechListenOptions(cancelOnError: true, partialResults: true));
     setState(() {});
   }
 
@@ -259,7 +260,7 @@ class _MyAppState extends State<MyApp> {
 
   void resultListener(SpeechRecognitionResult result) {
     setState(() {
-      lastWords = "${result.recognizedWords} - ${result.finalResult}";
+      lastWords = '${result.recognizedWords} - ${result.finalResult}';
     });
   }
 
@@ -271,21 +272,21 @@ class _MyAppState extends State<MyApp> {
 
   void errorListener(SpeechRecognitionError error) {
     setState(() {
-      lastError = "${error.errorMsg} - ${error.permanent}";
+      lastError = '${error.errorMsg} - ${error.permanent}';
     });
   }
 
   void statusListener(String status) {
     changeStatusForStress(status);
     setState(() {
-      lastStatus = "$status";
+      lastStatus = status;
     });
   }
 
-  _switchLang(selectedVal) {
+  void _switchLang(selectedVal) {
     setState(() {
       _currentLocaleId = selectedVal;
     });
-    print(selectedVal);
+    debugPrint(selectedVal);
   }
 }
