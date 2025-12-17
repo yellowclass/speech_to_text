@@ -160,25 +160,34 @@ public class SpeechToTextPlugin :
             when (call.method) {
                 "has_permission" -> hasPermission(result)
                 "initialize" -> {
-                    var dlog = call.argument<Boolean>("debugLogging")
-                    if (null != dlog) {
-                        debugLogging = dlog
+                    try {
+
+                        var dlog = call.argument<Boolean>("debugLogging")
+                        if (null != dlog) {
+                            debugLogging = dlog
+                        }
+                        var ausOpt = call.argument<Boolean>("alwaysUseStop")
+                        if (null != ausOpt) {
+                            alwaysUseStop = ausOpt == true
+                        }
+                        var iOpt = call.argument<Boolean>("intentLookup")
+                        if (null != iOpt) {
+                            intentLookup = iOpt == true
+                        }
+                        var noBtOpt = call.argument<Boolean>("noBluetooth")
+                        if (null != noBtOpt) {
+                            noBluetoothOpt = noBtOpt == true
+                        }
+                        initialize(result)
+                    } catch (exc: Exception) {
+                        Log.e(logTag, "SpeechToTextPlugin: failed to initialize", exc)
+                        result.error(SpeechToTextErrors.unknown.name,
+                                "SpeechToTextPlugin: failed to initialize", exc.localizedMessage)
                     }
-                    var ausOpt = call.argument<Boolean>("alwaysUseStop")
-                    if (null != ausOpt) {
-                        alwaysUseStop = ausOpt == true
-                    }
-                    var iOpt = call.argument<Boolean>("intentLookup")
-                    if (null != iOpt) {
-                        intentLookup = iOpt == true
-                    }
-                    var noBtOpt = call.argument<Boolean>("noBluetooth")
-                    if (null != noBtOpt) {
-                        noBluetoothOpt = noBtOpt == true
-                    }
-                    initialize(result)
                 }
                 "listen" -> {
+                    try {
+
                     var localeId = call.argument<String>("localeId")
                     if (null == localeId) {
                         localeId = defaultLanguageTag
@@ -199,6 +208,11 @@ public class SpeechToTextPlugin :
                         return
                     }
                     startListening(result, localeId, partialResults, listenModeIndex, onDevice )
+                    } catch (exc: Exception) {
+                        Log.e(logTag, "SpeechToTextPlugin: failed to listen", exc)
+                        result.error(SpeechToTextErrors.unknown.name,
+                                "SpeechToTextPlugin: failed to listen", exc.localizedMessage)
+                    }
                 }
                 "stop" -> stopListening(result)
                 "cancel" -> cancelListening(result)
@@ -307,6 +321,7 @@ public class SpeechToTextPlugin :
     }
 
     private fun stopListening(result: Result) {
+        try {
         if (sdkVersionTooLow() || isNotInitialized() || isNotListening()) {
             result.success(false)
             return
@@ -323,9 +338,15 @@ public class SpeechToTextPlugin :
         notifyListening(isRecording = false)
         result.success(true)
         debugLog("Stop listening done")
+    } catch (exc: Exception) {
+        Log.e(logTag, "SpeechToTextPlugin: failed to stop listening", exc)
+        result.error(SpeechToTextErrors.unknown.name,
+                "SpeechToTextPlugin: failed to stop listening", exc.localizedMessage)
+    }
     }
 
     private fun cancelListening(result: Result) {
+        try {
         if (sdkVersionTooLow() || isNotInitialized() || isNotListening()) {
             result.success(false)
             return
@@ -342,9 +363,15 @@ public class SpeechToTextPlugin :
         notifyListening(isRecording = false)
         result.success(true)
         debugLog("Cancel listening done")
+    } catch (exc: Exception) {
+        Log.e(logTag, "SpeechToTextPlugin: failed to cancel listening", exc)
+        result.error(SpeechToTextErrors.unknown.name,
+                "SpeechToTextPlugin: failed to cancel listening", exc.localizedMessage)
+    }
     }
 
     private fun locales(result: Result) {
+        try {
         if (sdkVersionTooLow()) {
             result.success(false)
             return
@@ -382,6 +409,11 @@ public class SpeechToTextPlugin :
                     detailsIntent, null, LanguageDetailsChecker(result, debugLogging),
                     null, Activity.RESULT_OK, null, null)
         }
+    } catch (exc: Exception) {
+        Log.e(logTag, "SpeechToTextPlugin: failed to get locales", exc)
+        result.error(SpeechToTextErrors.unknown.name,
+                "SpeechToTextPlugin: failed to get locales", exc.localizedMessage)
+    }
     }
 
     private fun notifyListening(isRecording: Boolean ) {
