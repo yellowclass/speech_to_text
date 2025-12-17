@@ -1,0 +1,11 @@
+{
+  "": {
+    "swift-dependencies": "/Users/suryanshomar/Desktop/sx_app/speech_to_text/speech_to_text/darwin/speech_to_text/.build/arm64-apple-macosx/debug/speech_to_text.build/master.swiftdeps"
+  },
+  "/Users/suryanshomar/Desktop/sx_app/speech_to_text/speech_to_text/darwin/speech_to_text/Sources/speech_to_text/SpeechToTextPlugin.swift": {
+    "dependencies": "/Users/suryanshomar/Desktop/sx_app/speech_to_text/speech_to_text/darwin/speech_to_text/.build/arm64-apple-macosx/debug/speech_to_text.build/SpeechToTextPlugin.d",
+    "object": "/Users/suryanshomar/Desktop/sx_app/speech_to_text/speech_to_text/darwin/speech_to_text/.build/arm64-apple-macosx/debug/speech_to_text.build/SpeechToTextPlugin.swift.o",
+    "swiftmodule": "/Users/suryanshomar/Desktop/sx_app/speech_to_text/speech_to_text/darwin/speech_to_text/.build/arm64-apple-macosx/debug/speech_to_text.build/SpeechToTextPlugin~partial.swiftmodule",
+    "swift-dependencies": "/Users/suryanshomar/Desktop/sx_app/speech_to_text/speech_to_text/darwin/speech_to_text/.build/arm64-apple-macosx/debug/speech_to_text.build/SpeechToTextPlugin.swiftdeps"
+  }
+}
